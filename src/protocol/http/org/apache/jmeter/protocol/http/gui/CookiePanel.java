@@ -40,6 +40,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.jmeter.config.gui.AbstractConfigGui;
 import org.apache.jmeter.gui.util.FileDialoger;
 import org.apache.jmeter.gui.util.HeaderAsPropertyRenderer;
@@ -47,7 +48,6 @@ import org.apache.jmeter.gui.util.PowerTableModel;
 import org.apache.jmeter.protocol.http.control.Cookie;
 import org.apache.jmeter.protocol.http.control.CookieHandler;
 import org.apache.jmeter.protocol.http.control.CookieManager;
-import org.apache.jmeter.protocol.http.control.HC3CookieHandler;
 import org.apache.jmeter.protocol.http.control.HC4CookieHandler;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.property.JMeterProperty;
@@ -55,8 +55,8 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.gui.GuiUtils;
 import org.apache.jorphan.gui.JLabeledChoice;
 import org.apache.jorphan.gui.layout.VerticalLayout;
-import org.apache.jorphan.logging.LoggingManager;
-import org.apache.log.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the GUI for Cookie Manager
@@ -67,9 +67,9 @@ import org.apache.log.Logger;
  */
 public class CookiePanel extends AbstractConfigGui implements ActionListener {
 
-    private static final long serialVersionUID = 240L;
+    private static final long serialVersionUID = 241L;
 
-    private static final Logger log = LoggingManager.getLoggerForClass();
+    private static final Logger log = LoggerFactory.getLogger(CookiePanel.class);
 
     //++ Action command names
     private static final String ADD_COMMAND = "Add"; //$NON-NLS-1$
@@ -104,11 +104,11 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
     private HashMap<String, String> handlerMap = new HashMap<>();
 
     private static final String[] COLUMN_RESOURCE_NAMES = {
-        ("name"),   //$NON-NLS-1$
-        ("value"),  //$NON-NLS-1$
-        ("domain"), //$NON-NLS-1$
-        ("path"),   //$NON-NLS-1$
-        ("secure"), //$NON-NLS-1$
+        "name",   //$NON-NLS-1$
+        "value",  //$NON-NLS-1$
+        "domain", //$NON-NLS-1$
+        "path",   //$NON-NLS-1$
+        "secure", //$NON-NLS-1$
         // removed expiration because it's just an annoyance for static cookies
     };
 
@@ -151,22 +151,21 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
                 // before deleting the row.
                 GuiUtils.cancelEditing(cookieTable);
 
-                int rowSelected = cookieTable.getSelectedRow();
-
-                if (rowSelected != -1) {
+                if (cookieTable.getRowCount()>0) {
+                    int rowSelected = cookieTable.getSelectedRow();
+                    if(rowSelected < 0) {
+                        rowSelected = 0;
+                    }
                     tableModel.removeRow(rowSelected);
                     tableModel.fireTableDataChanged();
 
                     // Disable the DELETE and SAVE buttons if no rows remaining
                     // after delete.
-                    if (tableModel.getRowCount() == 0) {
-                        deleteButton.setEnabled(false);
-                        saveButton.setEnabled(false);
-                    }
+                    configureButtonsState();
 
-                    // Table still contains one or more rows, so highlight
-                    // (select) the appropriate one.
-                    else {
+                    if (tableModel.getRowCount() > 0) {
+                        // Table still contains one or more rows, so highlight
+                        // (select) the appropriate one.
                         int rowToSelect = rowSelected;
 
                         if (rowSelected >= tableModel.getRowCount()) {
@@ -185,14 +184,7 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
             tableModel.addNewRow();
             tableModel.fireTableDataChanged();
 
-            // Enable the DELETE and SAVE buttons if they are currently
-            // disabled.
-            if (!deleteButton.isEnabled()) {
-                deleteButton.setEnabled(true);
-            }
-            if (!saveButton.isEnabled()) {
-                saveButton.setEnabled(true);
-            }
+            configureButtonsState();
 
             // Highlight (select) the appropriate row.
             int rowToSelect = tableModel.getRowCount() - 1;
@@ -209,10 +201,7 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
                     }
                     tableModel.fireTableDataChanged();
 
-                    if (tableModel.getRowCount() > 0) {
-                        deleteButton.setEnabled(true);
-                        saveButton.setEnabled(true);
-                    }
+                    configureButtonsState();
                 }
             } catch (IOException ex) {
                 log.error("", ex);
@@ -227,10 +216,25 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
                 JMeterUtils.reportErrorToUser(ex.getMessage(), "Error saving cookies");
             }
         } else if (action.equals(HANDLER_COMMAND)) {
-            String currentPolicy = policy.getText();
-            policy.setValues(getPolicies(handlerMap.get(selectHandlerPanel.getSelectedItem())));
-            policy.setText(currentPolicy);
+            String cookieHandlerClass = handlerMap.get(selectHandlerPanel.getSelectedItem());
+            CookieHandler handlerImpl = getCookieHandler(cookieHandlerClass);
+            policy.setValues(handlerImpl.getPolicies());
+            policy.setText(handlerImpl.getDefaultPolicy());
          }
+    }
+
+    /**
+     * @param cookieHandlerClass CookieHandler class name
+     * @return {@link CookieHandler}
+     */
+    private static CookieHandler getCookieHandler(String cookieHandlerClass) {
+        try {
+            return (CookieHandler) 
+                    ClassUtils.getClass(cookieHandlerClass).newInstance();
+        } catch (Exception e) {
+            log.error("Error creating implementation:"+cookieHandlerClass+ ", will default to:"+DEFAULT_IMPLEMENTATION, e);
+            return getCookieHandler(DEFAULT_IMPLEMENTATION);
+        }
     }
 
     /**
@@ -238,13 +242,12 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
      * @return cookie policies
      */
     private static String[] getPolicies(String className) {
-        // TODO it would be better if CookieHandler had a method getSupportedPolicies() and empty constructor 
-        if(HC3CookieHandler.class.getName().equals(className)) {
-            return HC3CookieHandler.AVAILABLE_POLICIES;
-        } else if(HC4CookieHandler.class.getName().equals(className)) {
-            return HC4CookieHandler.AVAILABLE_POLICIES;
+        try {
+            return getCookieHandler(className).getPolicies();
+        } catch (Exception e) {
+            log.error("Error getting cookie policies from implementation:"+className, e);
+            return getPolicies(DEFAULT_IMPLEMENTATION);
         }
-        return HC4CookieHandler.AVAILABLE_POLICIES;
     }
 
     private void addCookieToTable(Cookie cookie) {
@@ -286,8 +289,16 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
         selectHandlerPanel.setSelectedItem(DEFAULT_IMPLEMENTATION
                 .substring(DEFAULT_IMPLEMENTATION.lastIndexOf('.') + 1));
         policy.setText(DEFAULT_POLICY);
-        deleteButton.setEnabled(false);
-        saveButton.setEnabled(false);
+        configureButtonsState();
+    }
+    
+    /**
+     * update buttons state
+     */
+    private void configureButtonsState() {
+        boolean hasRows = tableModel.getRowCount() > 0;
+        deleteButton.setEnabled(hasRows);
+        saveButton.setEnabled(hasRows);
     }
 
     private Cookie createCookie(Object[] rowData) {
@@ -306,6 +317,7 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
         for (JMeterProperty jMeterProperty : manager.getCookies()) {
             addCookieToTable((Cookie) jMeterProperty.getObjectValue());
         }
+        configureButtonsState();
     }
 
     @Override
@@ -389,7 +401,7 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
     }
 
     private JPanel createButtonPanel() {
-        boolean tableEmpty = (tableModel.getRowCount() == 0);
+        boolean tableEmpty = tableModel.getRowCount() == 0;
 
         addButton = createButton("add", 'A', ADD_COMMAND, true); //$NON-NLS-1$
         deleteButton = createButton("delete", 'D', DELETE_COMMAND, !tableEmpty); //$NON-NLS-1$
@@ -416,7 +428,7 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
         selectHandlerPanel.addActionListener(this);
 
         // if no results render in jmeter.properties, load Standard (default)
-        List<String> classesToAdd = Collections.<String>emptyList();
+        List<String> classesToAdd = Collections.emptyList();
         try {
             classesToAdd = JMeterUtils.findClassesThatExtend(CookieHandler.class);
         } catch (IOException e1) {
@@ -428,8 +440,11 @@ public class CookiePanel extends AbstractConfigGui implements ActionListener {
             if (DEFAULT_IMPLEMENTATION.equals(clazz)) {
                 tmpName = shortClazz;
             }
-            selectHandlerPanel.addItem(shortClazz);
             handlerMap.put(shortClazz, clazz);
+        }
+        // Only add to selectHandlerPanel after handlerMap has been initialized
+        for (String shortClazz : handlerMap.keySet()) {
+            selectHandlerPanel.addItem(shortClazz);
         }
         nodesModel.setSelectedItem(tmpName); // preset to default impl
         return selectHandlerPanel;

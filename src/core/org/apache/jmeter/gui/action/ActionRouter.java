@@ -32,13 +32,13 @@ import javax.swing.SwingUtilities;
 import org.apache.jmeter.exceptions.IllegalUserActionException;
 import org.apache.jmeter.gui.GuiPackage;
 import org.apache.jmeter.util.JMeterUtils;
-import org.apache.jorphan.logging.LoggingManager;
 import org.apache.jorphan.reflect.ClassFinder;
 import org.apache.jorphan.util.JMeterError;
-import org.apache.log.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ActionRouter implements ActionListener {
-    private static final Logger log = LoggingManager.getLoggerForClass();
+    private static final Logger log = LoggerFactory.getLogger(ActionRouter.class);
 
     // This is cheap, so no need to resort to IODH or lazy init
     private static final ActionRouter INSTANCE = new ActionRouter();
@@ -56,13 +56,7 @@ public final class ActionRouter implements ActionListener {
 
     @Override
     public void actionPerformed(final ActionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                performAction(e);
-            }
-
-        });
+        SwingUtilities.invokeLater(() -> performAction(e));
     }
 
     private void performAction(final ActionEvent e) {
@@ -71,7 +65,7 @@ public final class ActionRouter implements ActionListener {
             try {
                 GuiPackage.getInstance().updateCurrentGui();
             } catch (Exception err){
-                log.error("performAction(" + actionCommand + ") updateCurrentGui() on" + e.toString() + " caused", err);
+                log.error("performAction({}) updateCurrentGui() on{} caused", actionCommand, e, err);
                 JMeterUtils.reportErrorToUser("Problem updating GUI - see log file for details");
             }
             for (Command c : commands.get(actionCommand)) {
@@ -94,11 +88,11 @@ public final class ActionRouter implements ActionListener {
                     }
                     JMeterUtils.reportErrorToUser(msg);
                 } catch (Exception err) {
-                    log.error("Error processing "+c.toString(), err);
+                    log.error("Error processing {}", c, err);
                 }
             }
         } catch (NullPointerException er) {
-            log.error("performAction(" + actionCommand + ") " + e.toString() + " caused", er);
+            log.error("performAction({}) {} caused", actionCommand, e, er);
             JMeterUtils.reportErrorToUser("Sorry, this feature (" + actionCommand + ") not yet implemented");
         }
     }
@@ -308,16 +302,16 @@ public final class ActionRouter implements ActionListener {
         }
         try {
             List<String> listClasses = ClassFinder.findClassesThatExtend(
-                    JMeterUtils.getSearchPaths(), // strPathsOrJars - pathnames or jarfiles to search for classes
+                    JMeterUtils.getSearchPaths(), // strPathsOrJars - pathNames or jarfiles to search for classes
                     // classNames - required parent class(es) or annotations
                     new Class[] {Class.forName("org.apache.jmeter.gui.action.Command") }, // $NON-NLS-1$
                     false, // innerClasses - should we include inner classes?
-                    null, // contains - classname should contain this string
+                    null, // contains - className should contain this string
                     // Ignore the classes which are specific to the reporting tool
-                    "org.apache.jmeter.report.gui", // $NON-NLS-1$ // notContains - classname should not contain this string
-                    false); // annotations - true if classnames are annotations
+                    "org.apache.jmeter.report.gui", // $NON-NLS-1$ // notContains - className should not contain this string
+                    false); // annotations - true if classNames are annotations
             if (listClasses.isEmpty()) {
-                log.fatalError("!!!!!Uh-oh, didn't find any action handlers!!!!!");
+                log.error("!!!!!Uh-oh, didn't find any action handlers!!!!!");
                 throw new JMeterError("No action handlers found - check JMeterHome and libraries");
             }
             for (String strClassName : listClasses) {
@@ -332,8 +326,10 @@ public final class ActionRouter implements ActionListener {
                     commandObjects.add(command);
                 }
             }
-        } catch (HeadlessException e){
-            log.warn(e.toString());
+        } catch (HeadlessException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("AWT headless exception occurred. {}", e.toString());
+            }
         } catch (Exception e) {
             log.error("exception finding action handlers", e);
         }

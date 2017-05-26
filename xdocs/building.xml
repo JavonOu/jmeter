@@ -58,6 +58,27 @@ ant download_jars
 <p>
 This will retrieve any missing jars.
 </p>
+<note>
+If you are behind a proxy, you can set a few build properties in <code>build-local.properties</code> for ant to use the proxy:
+<source>
+proxy.use=true
+proxy.host=proxy.example.invalid
+proxy.port=8080
+proxy.user=your_user_name
+proxy.pass=your_password
+</source>
+You might also want to skip some tests - that are failing without proper access to the internet - by adding some more
+properties into <code>build-local.properties</code>:
+<source>
+skip.bug52310=true
+skip.bug60607=true
+skip.batchtest_Http4ImplPreemptiveBasicAuth=true
+skip.batchtest_SlowCharsFeature=true
+skip.batchtest_TestKeepAlive=true
+skip.test_http=true
+skip.test_TestDNSCacheManager.testWithCustomResolverAnd1Server=true
+</source>
+</note>
 
 <p>
 Once you have downloaded the source from SVN or the release archives and run the ant <code>download_jars</code> target to
@@ -65,7 +86,7 @@ install the dependent jars, you can configure Eclipse. The easiest way to do thi
 file with the <code>eclipse.classpath</code> file provided with JMeter. This will set up the source-paths and most of the libraries.
 </p>
 <p>
-Ensure you read <code>eclipse.readme</code> for project configuration.
+Ensure you read <code>eclipse.md</code> for project configuration.
 </p>
 
 
@@ -76,26 +97,34 @@ The basic command is:</p>
 <source>
 ant [install]
 </source>
+<p>
 See <code>build.xml</code> (or call <code>ant -p</code>) for the other targets that can be used.
-
+</p>
 </section>
 
 <section name="Contributing to JMeter">
 <h2>We love contribution</h2>
+<p>
 We are very grateful to you if you take some time to contribute to the project.
-If you have some time to spend on the project you can pick existing enhancement or bug from <a target="_blank" href="issues.html">Issues page</a>.
+If you have some time to spend on the project you can pick existing enhancement or bug from <a target="_blank" href="issues.html">Issues page</a>.<br/>
+You can also contribute to translation, see <a href="localising/index.html">JMeter Localisation (Translator's Guide)</a>.
+</p>
 
 <h2>Submitting a patch</h2>
-
+<p>
 If you want to contribute to JMeter for a bug fix or enhancement, here is the procedure to follow:
+</p>
 
 <h3>Check your patch</h3>
+<p>
 Before submitting your patch ensure you do the following:<br/>
 
 Check that patch compiles and follows Tab space policy by running:
+</p>
 <source>ant package-and-check</source>
-
+<p>
 Check that patch does not break JUnit tests by running:
+</p>
 <source>ant test</source>
 
 <h3>Create a PR using GIT</h3>

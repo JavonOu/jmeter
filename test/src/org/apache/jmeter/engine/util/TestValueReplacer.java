@@ -40,8 +40,6 @@ import org.junit.Test;
 public class TestValueReplacer extends JMeterTestCase {
         private TestPlan variables;
 
-
-        /** {@inheritDoc} */
         @Before
         public void setUp() {
             variables = new TestPlan();
@@ -109,6 +107,24 @@ public class TestValueReplacer extends JMeterTestCase {
             String replacedDomain = element.getPropertyAsString("domain");
             assertEquals("${${shortMatch}", replacedDomain);
         }
+        
+        @Test
+        public void test2Matches() throws Exception {
+            TestPlan plan = new TestPlan();
+            plan.addParameter("firstMatch", "toto");
+            plan.addParameter("secondMatch", "005");
+            ValueReplacer replacer = new ValueReplacer(plan);
+            TestElement element = new TestPlan();
+            element.setProperty(new StringProperty("mail", "toto%40005"));
+            replacer.reverseReplace(element, true);
+            String replacedDomain = element.getPropertyAsString("mail");
+            assertEquals("${firstMatch}%40005", replacedDomain);
+            
+            element.setProperty(new StringProperty("mail", "toto@005"));
+            replacer.reverseReplace(element, true);
+            replacedDomain = element.getPropertyAsString("mail");
+            assertEquals("${firstMatch}@${secondMatch}", replacedDomain);
+        }
 
         @Test
         public void testReplace() throws Exception {
@@ -152,7 +168,6 @@ public class TestValueReplacer extends JMeterTestCase {
             assertEquals("jakarta.apache.org \\ \\ \\\\ , ", element.getPropertyAsString("domain"));
         }
 
-        /** {@inheritDoc} */
         @After
         public void tearDown() throws Exception {
             JMeterContextService.getContext().setSamplingStarted(false);

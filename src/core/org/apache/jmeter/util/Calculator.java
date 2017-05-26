@@ -127,7 +127,7 @@ public class Calculator {
     
     /**
      * add received bytes
-     * @param value received bytes
+     * @param newValue received bytes
      */
     public void addBytes(long newValue) {
         bytes += newValue;
@@ -185,10 +185,10 @@ public class Calculator {
         double rval = 0.0;
 
         if (count == 0) {
-            return (rval);
+            return rval;
         }
         rval = (double) errors / (double) count;
-        return (rval);
+        return rval;
     }
 
     /**

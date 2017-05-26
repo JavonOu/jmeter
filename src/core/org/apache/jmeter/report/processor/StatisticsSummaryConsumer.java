@@ -21,10 +21,21 @@ import org.apache.jmeter.report.core.Sample;
 import org.apache.jmeter.util.JMeterUtils;
 
 /**
- * <p>
- * The class ErrorSummaryConsumer provides a consumer that calculates error
- * statistics.
- * </p>
+ * The class StatisticsSummaryConsumer provides a consumer that calculates:
+ * <ul>
+ *      <li>total number of samples</li>
+ *      <li>errors</li>
+ *      <li>error %</li>
+ *      <li>mean response time</li>
+ *      <li>percentile 1 (90% by default)</li>
+ *      <li>percentile 2 (95% by default)</li>
+ *      <li>percentile 3 (99% by default)</li>
+ *      <li>throughput</li>
+ *      <li>received bytes per second</li>
+ *      <li>sent bytes per second</li>
+ *      <li>min</li>
+ *      <li>max</li>
+ * </ul>
  * 
  * @since 3.0
  */
@@ -126,14 +137,14 @@ public class StatisticsSummaryConsumer extends
         result.addResult(new ValueResultData(Long.valueOf(errors)));
         result.addResult(new ValueResultData(Double.valueOf((double) errors * 100 / total)));
         result.addResult(new ValueResultData(Double.valueOf(data.getMean().getResult())));
+        result.addResult(new ValueResultData(Long.valueOf(data.getMin())));
+        result.addResult(new ValueResultData(Long.valueOf(data.getMax())));
         result.addResult(new ValueResultData(Double.valueOf(data.getPercentile1().getResult())));
         result.addResult(new ValueResultData(Double.valueOf(data.getPercentile2().getResult())));
         result.addResult(new ValueResultData(Double.valueOf(data.getPercentile3().getResult())));
         result.addResult(new ValueResultData(Double.valueOf(data.getThroughput())));
         result.addResult(new ValueResultData(Double.valueOf(data.getKBytesPerSecond())));
         result.addResult(new ValueResultData(Double.valueOf(data.getSentKBytesPerSecond())));
-        result.addResult(new ValueResultData(Long.valueOf(data.getMin())));
-        result.addResult(new ValueResultData(Long.valueOf(data.getMax())));
         return result;
     }
 
@@ -169,6 +180,8 @@ public class StatisticsSummaryConsumer extends
             JMeterUtils.getResString("reportgenerator_summary_statistics_error_percent")));
         titles.addResult(new ValueResultData(
                 JMeterUtils.getResString("reportgenerator_summary_statistics_mean")));
+        titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_min")));
+        titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_max")));
         titles.addResult(new ValueResultData(
             String.format(
                 JMeterUtils.getResString("reportgenerator_summary_statistics_percentile_fmt"),
@@ -184,8 +197,7 @@ public class StatisticsSummaryConsumer extends
         titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_throughput")));
         titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_kbytes")));
         titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_sent_kbytes")));
-        titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_min")));
-        titles.addResult(new ValueResultData(JMeterUtils.getResString("reportgenerator_summary_statistics_max")));
+
         return titles;
     }
 

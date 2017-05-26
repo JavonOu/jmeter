@@ -366,9 +366,11 @@ public abstract class HTTPAbstractImpl implements Interruptible, HTTPConstantsIn
      * Invokes {@link HTTPSamplerBase#isMonitor()}
      *
      * @return flag whether monitor is enabled
+     * @deprecated since 3.2 always return false
      */
+    @Deprecated
     protected boolean isMonitor() {
-        return testElement.isMonitor();
+        return false;
     }
 
     /**
@@ -458,7 +460,7 @@ public abstract class HTTPAbstractImpl implements Interruptible, HTTPConstantsIn
      * @return the response or the MD5 of the response
      * @throws IOException
      *             when reading the result fails
-     * @deprecated use {@link HTTPAbstractImpl#readResponse(SampleResult, BufferedInputStream, long)
+     * @deprecated use {@link HTTPAbstractImpl#readResponse(SampleResult, BufferedInputStream, long)}
      */
     @Deprecated
     protected byte[] readResponse(SampleResult res, BufferedInputStream in,

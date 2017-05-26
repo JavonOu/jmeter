@@ -18,6 +18,8 @@
 
 package org.apache.jmeter.extractor;
 
+import static org.junit.Assert.assertThat;
+
 import java.nio.charset.StandardCharsets;
 
 import net.minidev.json.parser.JSONParser;
@@ -28,12 +30,111 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContext;
 import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterVariables;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestJSONPostProcessor {
 
     private static final String VAR_NAME = "varName";
+
+    @Test
+    public void testProcessAllElementsOneMatch() {
+        JMeterContext context = JMeterContextService.getContext();
+        JSONPostProcessor processor = setupProcessor(context, "-1", true);
+        JMeterVariables vars = new JMeterVariables();
+        processor.setDefaultValues("NONE");
+        processor.setJsonPathExpressions("$[*]");
+        processor.setRefNames("varname");
+        processor.setScopeVariable("contentvar");
+        context.setVariables(vars);
+        vars.put("contentvar", "[\"one\"]");
+        processor.process();
+        assertThat(vars.get("varname"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_1"), CoreMatchers.is("one"));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is("1"));
+    }
+
+    @Test
+    public void testProcessAllElementsMultipleMatches() {
+        JMeterContext context = JMeterContextService.getContext();
+        JSONPostProcessor processor = setupProcessor(context, "-1", true);
+        JMeterVariables vars = new JMeterVariables();
+        processor.setDefaultValues("NONE");
+        processor.setJsonPathExpressions("$[*]");
+        processor.setRefNames("varname");
+        processor.setScopeVariable("contentvar");
+        context.setVariables(vars);
+        vars.put("contentvar", "[\"one\", \"two\"]");
+        processor.process();
+        assertThat(vars.get("varname_1"), CoreMatchers.is("one"));
+        assertThat(vars.get("varname_2"), CoreMatchers.is("two"));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is("2"));
+    }
+
+    @Test
+    public void testProcessRandomElementMultipleMatches() {
+        JMeterContext context = JMeterContextService.getContext();
+        JSONPostProcessor processor = setupProcessor(context, "0", true);
+        JMeterVariables vars = new JMeterVariables();
+        processor.setDefaultValues("NONE");
+        processor.setJsonPathExpressions("$[*]");
+        processor.setRefNames("varname");
+        processor.setScopeVariable("contentvar");
+        context.setVariables(vars);
+        vars.put("contentvar", "[\"one\", \"two\"]");
+        processor.process();
+        assertThat(vars.get("varname"), CoreMatchers.is(CoreMatchers.anyOf(CoreMatchers.is("one"), CoreMatchers.is("two"))));
+        assertThat(vars.get("varname_1"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_2"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is(CoreMatchers.nullValue()));
+    }
+
+    @Test
+    public void testPR235CaseEmptyResponse() {
+        JMeterContext context = JMeterContextService.getContext();
+        JSONPostProcessor processor = setupProcessor(context, "-1", true);
+        JMeterVariables vars = new JMeterVariables();
+        processor.setDefaultValues("NONE");
+        processor.setJsonPathExpressions("$[*]");
+        processor.setRefNames("varname");
+        processor.setScopeVariable("contentvar");
+        context.setVariables(vars);
+        vars.put("contentvar", "[\"one\", \"two\"]");
+        processor.process();
+        assertThat(vars.get("varname_1"), CoreMatchers.is("one"));
+        assertThat(vars.get("varname_2"), CoreMatchers.is("two"));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is("2"));
+        vars.put("contentvar", "");
+        processor.process();
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_1"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_2"), CoreMatchers.is(CoreMatchers.nullValue()));
+    }
+
+    @Test
+    public void testPR235CaseMatchOneWithZero() {
+        JMeterContext context = JMeterContextService.getContext();
+        JSONPostProcessor processor = setupProcessor(context, "-1", true);
+        JMeterVariables vars = new JMeterVariables();
+        processor.setDefaultValues("NONE");
+        processor.setJsonPathExpressions("$[*]");
+        processor.setRefNames("varname");
+        processor.setScopeVariable("contentvar");
+        context.setVariables(vars);
+        vars.put("contentvar", "[\"one\", \"two\"]");
+        processor.process();
+        assertThat(vars.get("varname_1"), CoreMatchers.is("one"));
+        assertThat(vars.get("varname_2"), CoreMatchers.is("two"));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is("2"));
+        vars.put("contentvar", "[\"A\", \"B\"]");
+        processor.setMatchNumbers("0");
+        processor.process();
+        assertThat(vars.get("varname"), CoreMatchers.is(CoreMatchers.anyOf(CoreMatchers.is("A"), CoreMatchers.is("B"))));
+        assertThat(vars.get("varname_matchNr"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_1"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get("varname_2"), CoreMatchers.is(CoreMatchers.nullValue()));
+    }
 
     @Test
     public void testBug59609() throws ParseException {
@@ -54,8 +155,9 @@ public class TestJSONPostProcessor {
 
         JSONParser parser = new JSONParser(0);
         Object expectedValue = parser.parse(innerValue);
-        Assert.assertEquals(expectedValue, parser.parse(vars.get(VAR_NAME)));
-        Assert.assertEquals("1", vars.get(VAR_NAME + "_matchNr"));
+        assertThat(parser.parse(vars.get(VAR_NAME)), CoreMatchers.is(expectedValue));
+        assertThat(vars.get(VAR_NAME + "_matchNr"), CoreMatchers.is(CoreMatchers.nullValue()));
+        assertThat(vars.get(VAR_NAME + "_1"), CoreMatchers.is(CoreMatchers.nullValue()));
     }
 
     @Test

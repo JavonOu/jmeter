@@ -13,19 +13,13 @@ Which jars are used by which modules?
 ====================================
 [not exhaustive]
 
-asm-5.1 (org.ow2.asm)
+asm-5.2 (org.ow2.asm)
 ----------------------
 - JSON Path extractor
 
-accessors-smart-1.1 (net.minidev)
+accessors-smart-1.2 (net.minidev)
 ----------------------
 - JSON Path extractor
-
-avalon-framework-4.1.4 (org.apache.avalon.framework)
-----------------------
-- LogKit (LoggingManager)
-- Configuration (DataSourceElement)
-- OldSaveService
 
 bsf-2.4.0.jar (org.apache.bsf)
 -------------
@@ -36,23 +30,27 @@ bsh-2.0b5.jar (org.bsh)
 -------------
 - BeanShell test elements
 
+dec-0.1.1 (org.brotli.dec)
+-----------------
+https://github.com/google/brotli/tree/master/java/org/brotli
+- Used by HTTP4 HC Impl for brotli decoding
+
+caffeine 2.4.0
+-----------------
+https://github.com/ben-manes/caffeine/
+- Used by CssParser
+- Used by JMS Publisher Sampler
+
 commons-codec-1.10
 -----------------
 http://commons.apache.org/downloads/download_codec.cgi
-- used by commons-httpclient-3.1
-- also HtmlParserTester for Base64
+- Used by ProxyControl and JSR223Test Element for Base64 and md5 
 
 commons-collections-3.2.2
 -------------------------
 http://commons.apache.org/downloads/download_collections.cgi
 - ListenerNotifier
 - Anakia
-
-commons-httpclient-3.1
-----------------------
-http://hc.apache.org/downloads.cgi
-- httpclient version of HTTP sampler
-- Cookie manager implementation
 
 commons-io-2.5
 --------------
@@ -69,22 +67,17 @@ commons-lang-2.6
 http://commons.apache.org/downloads/download_lang.cgi
 - velocity (Anakia)
 
-commons-lang3-3.4
+commons-lang3-3.5
 ----------------
 http://commons.apache.org/downloads/download_lang.cgi
 - URLCollection (unescapeXml)
-
-commons-logging-1.2
----------------------
-http://commons.apache.org/downloads/download_logging.cgi
-- httpclient
 
 commons-math3-3.6.1
 -----------------
 http://commons.apache.org/proper/commons-math/download_math.cgi
 - BackendListener
 
-commons-net-3.5
+commons-net-3.6
 -----------------
 http://commons.apache.org/downloads/download_net.cgi
 - FTPSampler
@@ -94,16 +87,12 @@ commons-pool2-2.4.2
 http://commons.apache.org/proper/commons-pool/download_pool.cgi
 - BackendListener
 
-dnsjava-2.1.7
+dnsjava-2.1.8
 -----------------
 http://www.dnsjava.org/download/
 - DNSCacheManager
 
-excalibur-logger-1.1 (org.apache.avalon.excalibur.logger)
---------------------
-- LoggingManager
-
-groovy-all-2.4.7
+groovy-all-2.4.10
 ----------------------
 Advised scripting language for JSR223 Test Elements
 
@@ -126,22 +115,22 @@ jdom-1.1.3
 http://www.jdom.org/downloads/index.html
 - Anakia
 
-jodd-core-3.7.1
+jodd-core-3.8.1
 --------
 http://www.jodd.org/
 - CSS/JQuery like extractor dependency
 
-jodd-lagarto-3.7.1
+jodd-lagarto-3.8.1
 --------
 http://jodd.org/doc/csselly/
 - CSS/JQuery like extractor
 
-jodd-log-3.7.1
+jodd-log-3.8.1
 --------
 http://www.jodd.org/
 - CSS/JQuery like extractor dependency
 
-jodd-props-3.7.1
+jodd-props-3.8.1
 --------
 http://www.jodd.org/
 - used by Report/Dashboard feature properties management
@@ -152,23 +141,28 @@ https://github.com/jayway/JsonPath
 - JSON Path Extractor
 - JSON Path Renderer
 
-json-smart-2.2.1 (net.minidev)
+json-smart-2.3 (net.minidev)
 --------
 https://github.com/netplex/json-smart-v2
 - JSON Path Extractor
 - JSON Path Renderer
 
-jsoup-1.9.2
+jsoup-1.10.2
 --------
 http://www.jsoup.org/
 - CSS/JQuery like extractor
 
-ph-css-4.1.5
+log4j2
+--------
+https://logging.apache.org/log4j/2.x/
+- Logging framework
+
+ph-css-5.0.3
 --------
 https://github.com/phax/ph-css
 - CssParser
 
-ph-commons-6.2.4
+ph-commons-8.6.0
 --------
 https://github.com/phax/ph-commons
 - CssParser
@@ -191,15 +185,15 @@ junit 4.12
 -----------
 - unit tests, JUnit sampler
 
-HttpComponents (HttpComponents Core 4.4.x and HttpComponents Client 4.5.x)
+HttpComponents
+- HttpComponents Core 4.4.6 
+- HttpComponents Client 4.5.3
+- HttpComponents AsyncClient 4.1.3
+- HttpComponents Core NIO 4.4.6
 -----------
 http://hc.apache.org/
-- httpclient 4 implementation for HTTP sampler 
-
-logkit-2.0
-----------
-- logging
-- Anakia
+- httpclient 4 implementation for HTTP sampler
+- httpasyncclient implementation for InfluxDB Backend Listener Client
 
 mongo-java-driver 2.11.3
 ------------------------
@@ -211,7 +205,7 @@ oro-2.0.8
 http://jakarta.apache.org/site/downloads/downloads_oro.cgi
 - regular expressions: various
 
-rsyntaxtextarea-2.6.0
+rsyntaxtextarea-2.6.1
 ---------------------
 http://fifesoft.com/rsyntaxtextarea/
 - syntax coloration
@@ -221,13 +215,13 @@ serialiser-2.7.1
 http://www.apache.org/dyn/closer.cgi/xml/xalan-j
 - xalan
 
-slf4j-api-1.7.21
+slf4j-api-1.7.25
 ----------------
 http://www.slf4j.org/
 - jodd-core
 - json-path
 
-tika-1.13
+tika-1.14
 --------------
 http://tika.apache.org/
 - Regular Expression Extractor
